@@ -1,0 +1,57 @@
+# Editor-specifika filer
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CMake build-filer
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Kompilerade filer
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# Exekverbara filer (lägg till ditt projektnamn)
+Graph_sim_enviroment
+Graph_sim_enviroment.exe
+
+# Debug-filer
+*.dSYM/
+*.pdb
+*.ilk
+
+# Testing
+Testing/
+CTestTestfile.cmake
+
+# Valgrind/profiling
+*.log
+vgcore.*
+callgrind.out.*
+massif.out.*
+
+# OS-specifika
+Thumbs.db
+*.stackdump
+
+# Backup-filer
+*.bak
+*.backup
+*~
