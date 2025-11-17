@@ -66,6 +66,7 @@ struct FrontDesk {
 struct Node
 {
     std::string id;
+    NodeType type;  
     int maxRobots;
     int currentRobots = 0;
 
@@ -75,5 +76,5 @@ struct Node
 
 extern std::vector<Node> nodes;
 extern std::vector<std::vector<Edge>> adj;
-
+extern std::vector<Product> products;
 #endif

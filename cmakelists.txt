@@ -1,10 +1,24 @@
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic -Werror")
+cmake_minimum_required(VERSION 3.16)
+project(GraphSimEnv LANGUAGES CXX)
 
-include_directories(${PROJECT_SOURCE_DIR}/includes)
+# C++ standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-file(GLOB SOURCES
-     "${PROJECT_SOURCE_DIR}/src/*.c")
+# Kompilatorflaggor
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic -O2)
+elseif (MSVC)
+    add_compile_options(/W4)
+endif()
 
-add_executable(Graph_sim_enviroment ${SOURCES})
+# Inkludera header directory
+include_directories(${CMAKE_SOURCE_DIR}/includes)
+
+# Samla alla källfiler
+file(GLOB SRC_FILES
+    "${CMAKE_SOURCE_DIR}/src/*.cpp"
+)
+
+# Skapa körbar fil
+add_executable(GraphSim ${SRC_FILES})
