@@ -9,6 +9,8 @@
 
 build/
 
+#externa filer ie pybind11
+externals/
 
 # Kompilerade filer
 *.o
@@ -22,6 +24,7 @@ build/
 *.a
 *.lib
 
+json.hpp
 # Exekverbara filer (lägg till ditt projektnamn)
 Graph_sim_enviroment
 Graph_sim_enviroment.exe

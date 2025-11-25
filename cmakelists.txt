@@ -5,20 +5,34 @@ project(GraphSimEnv LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Kompilatorflaggor
+# Compiler flags
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra -Wpedantic -O2)
 elseif (MSVC)
     add_compile_options(/W4)
 endif()
 
-# Inkludera header directory
-include_directories(${CMAKE_SOURCE_DIR}/includes)
+# Hämta pybind11
+add_subdirectory(externals/pybind11)
 
-# Samla alla källfiler
+# Samla alla C++-filer
 file(GLOB SRC_FILES
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
 )
 
-# Skapa körbar fil
-add_executable(GraphSim ${SRC_FILES})
+# Bestäm vilken fil som exponerar modulen till Python
+set(BINDING_SRC "${CMAKE_SOURCE_DIR}/src/exposeToPy.cpp")
+
+# Skapa Python-modulen
+pybind11_add_module(warehouse_env
+    ${BINDING_SRC}
+    ${SRC_FILES}
+)
+
+# Inkludera headers
+target_include_directories(warehouse_env PRIVATE 
+    ${CMAKE_SOURCE_DIR}/includes
+)
+
+# Länka rätt pybind11-bibliotek
+target_link_libraries(warehouse_env PRIVATE pybind11::module)

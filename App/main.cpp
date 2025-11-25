@@ -1,5 +1,10 @@
 #include <iostream>
+#include <chrono>
+#include <thread>
 #include "../includes/datatypes.hpp"
+#include "../includes/exportJson.hpp"
+#include "../includes/json.hpp"
+#include "../includes/graphMqtt.hpp"
 
 void initSimulation();
 
@@ -32,7 +37,6 @@ void drawGraph(){
     for (int i = 0; i < nodes.size(); ++i) {
         for (const auto& e : adj[i]) {
             if (e.directed) {
-                // Riktad kant
                 std::cout << "[" << nodes[i].id << "] --(" << e.distance << ")--> [" 
                           << nodes[e.to].id << "]\n";
             } else {
@@ -54,5 +58,6 @@ int main() {
 
     drawGraph();
     showProducts();
+    exportSimulationJSON("exports/warehouse_state.json");
     return 0;
 }
