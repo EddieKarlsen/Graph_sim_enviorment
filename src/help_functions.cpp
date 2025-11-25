@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cmath>
 #include <map>
+#include <algorithm>
 
 // Global robot vector
 std::vector<Robot> robots;

@@ -7,19 +7,45 @@
 #include <random>
 
 enum class EventType {
-    IncomingDelivery,    // Lastbil anländer till LoadingDock
-    CustomerOrder,       // Kund beställer från FrontDesk
-    RobotTaskComplete,   // Robot slutför uppgift
-    LowBattery,         // Robot behöver laddas
-    RestockNeeded       // Produkt har låg stock
+    IncomingDelivery,
+    CustomerOrder,
+    RobotTaskComplete,
+    LowBattery,
+    RestockNeeded
 };
 
 struct SimEvent {
     EventType type;
-    double triggerTime;  // När händelsen ska inträffa
-    int nodeIndex;       // Relevant nod (LoadingDock/FrontDesk)
-    int productID;       // Relevant produkt
-    int quantity;        // Antal items
+    double triggerTime;
+    int nodeIndex;
+    int productID;
+    int quantity;
+    
+    // Getters
+    EventType getType() const { return type; }
+    double getTriggerTime() const { return triggerTime; }
+    int getNodeIndex() const { return nodeIndex; }
+    int getProductID() const { return productID; }
+    int getQuantity() const { return quantity; }
+    
+    // Setters
+    void setType(EventType t) { type = t; }
+    void setTriggerTime(double time) { triggerTime = time; }
+    void setNodeIndex(int idx) { nodeIndex = idx; }
+    void setProductID(int pid) { productID = pid; }
+    void setQuantity(int qty) { quantity = qty; }
+    
+    // Utility
+    std::string getTypeString() const {
+        switch(type) {
+            case EventType::IncomingDelivery: return "IncomingDelivery";
+            case EventType::CustomerOrder: return "CustomerOrder";
+            case EventType::RobotTaskComplete: return "RobotTaskComplete";
+            case EventType::LowBattery: return "LowBattery";
+            case EventType::RestockNeeded: return "RestockNeeded";
+            default: return "Unknown";
+        }
+    }
     
     bool operator>(const SimEvent& other) const {
         return triggerTime > other.triggerTime;
@@ -44,5 +70,34 @@ void handleRestockNeeded(const SimEvent& event);
 // Initialize event system
 void initEventSystem(unsigned int seed = 42);
 void processEvents(double deltaTime);
+
+// Event system accessors for Python
+namespace EventSystemAccess {
+    double getCurrentSimTime();
+    void setCurrentSimTime(double time);
+    int getQueueSize();
+    bool hasNextEvent();
+    double getNextEventTime();
+    SimEvent peekNextEvent();  // Get next event without removing it
+    
+    // Statistics
+    struct EventStats {
+        int totalDeliveries;
+        int totalOrders;
+        int totalRestockChecks;
+        double avgDeliveryInterval;
+        double avgOrderInterval;
+        
+        // Getters
+        int getTotalDeliveries() const { return totalDeliveries; }
+        int getTotalOrders() const { return totalOrders; }
+        int getTotalRestockChecks() const { return totalRestockChecks; }
+        double getAvgDeliveryInterval() const { return avgDeliveryInterval; }
+        double getAvgOrderInterval() const { return avgOrderInterval; }
+    };
+    
+    EventStats getEventStats();
+    void resetEventStats();
+}
 
 #endif

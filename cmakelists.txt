@@ -15,18 +15,20 @@ endif()
 # Hämta pybind11
 add_subdirectory(externals/pybind11)
 
-# Samla alla C++-filer
-file(GLOB SRC_FILES
-    "${CMAKE_SOURCE_DIR}/src/*.cpp"
-)
-
 # Bestäm vilken fil som exponerar modulen till Python
 set(BINDING_SRC "${CMAKE_SOURCE_DIR}/src/exposeToPy.cpp")
 
-# Skapa Python-modulen
+# Samla alla C++-filer i src/
+# OBS: Använder en annan variabel för att undvika namnkrock
+file(GLOB_RECURSE ALL_CPP_FILES "${CMAKE_SOURCE_DIR}/src/*.cpp")
+
+# Filtrera bort bindningsfilen från listan för att förhindra dubbellänkning!
+list(REMOVE_ITEM ALL_CPP_FILES ${BINDING_SRC})
+
+# Skapa Python-modulen: BINDING_SRC läggs till först, följt av resten av källfilerna
 pybind11_add_module(warehouse_env
     ${BINDING_SRC}
-    ${SRC_FILES}
+    ${ALL_CPP_FILES}
 )
 
 # Inkludera headers
