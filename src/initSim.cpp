@@ -77,7 +77,7 @@ void initProducts() {
     products.push_back({29, "Children's Toys", 0});
     products.push_back({30, "Board Games", 0});
     
-    std::cout << "Initialized " << products.size() << " products\n";
+    std::cerr << "Initialized " << products.size() << " products\n";
 }
 
 void initGraphLayout() {
@@ -184,7 +184,7 @@ void initGraphLayout() {
     addEdge(shelfINode, frontDeskNode, 8.0, false);
     addEdge(shelfFNode, chargingStationNode, 10.0, true);
 
-    std::cout << "Simulation graph layout initialized with " << nodes.size() << " nodes\n";
+    std::cerr << "Simulation graph layout initialized with " << nodes.size() << " nodes\n";
 }
 
 void resetInventory() {
@@ -290,5 +290,5 @@ void resetInventory() {
         node.setCurrentRobots(0);
     }
 
-    std::cout << "Inventory reset for new episode\n";
+    std::cerr << "Inventory reset for new episode\n";
 }

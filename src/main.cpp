@@ -13,7 +13,31 @@ const double TIMESTEP = 1.0;             // 1 second
 const bool ENABLE_LOGGING = true;
 const bool ENABLE_JSON_LOGGING = false;  // Set to true for debug
 
+
 int main(int argc, char* argv[]) {
+    std::string cpp_to_py_pipe;
+    std::string py_to_cpp_pipe;
+
+    if (argc >= 3) {
+        cpp_to_py_pipe = argv[1];
+        py_to_cpp_pipe = argv[2];
+        std::cerr << "[INIT] Using named pipes:\n";
+        std::cerr << "  C++ -> Python: " << cpp_to_py_pipe << "\n";
+        std::cerr << "  Python -> C++: " << py_to_cpp_pipe << "\n";
+        
+        // Redirect stdout to cpp_to_py pipe
+        freopen(cpp_to_py_pipe.c_str(), "w", stdout);
+        // Redirect stdin from py_to_cpp pipe  
+        freopen(py_to_cpp_pipe.c_str(), "r", stdin);
+        
+        // Disable buffering
+        setvbuf(stdout, NULL, _IONBF, 0);
+        setvbuf(stdin, NULL, _IONBF, 0);
+    }
+
+    std::ios_base::sync_with_stdio(false); // Stänger av synkning med C standard I/O
+    std::cin.tie(NULL);
+
     std::cerr << "=== Warehouse Simulation Starting ===\n\n";
     
     // 1. Initialize simulation
@@ -43,6 +67,9 @@ int main(int argc, char* argv[]) {
     
     // Wait for Python to be ready (it will send back any message)
     std::cerr << "[INIT] Waiting for RL agent to be ready...\n";
+
+    std::cout.flush();
+    std::cerr.flush();
     json ackMsg = globalJsonComm->receiveMessage();
     if (ackMsg.empty() || ackMsg.value("type", "") != "READY") {
         std::cerr << "[ERROR] Did not receive READY from RL agent. Exiting.\n";

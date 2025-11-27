@@ -23,3 +23,5 @@ double calculateDistance(int nodeA, int nodeB) {
 bool isRobotAtNode(int robotIdx, int nodeIdx) {
     return robots[robotIdx].currentNode == nodeIdx && robots[robotIdx].progress >= 1.0;
 }
+
+

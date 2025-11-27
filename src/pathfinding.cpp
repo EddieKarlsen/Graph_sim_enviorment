@@ -9,18 +9,18 @@ const double INF = std::numeric_limits<double>::infinity();
 
 void Path::print() const {
     if (!found) {
-        std::cout << "Path: Not found\n";
+        std::cerr << "Path: Not found\n";
         return;
     }
     
-    std::cout << "Path (distance: " << totalDistance << "): ";
+    std::cerr << "Path (distance: " << totalDistance << "): ";
     for (size_t i = 0; i < nodes.size(); ++i) {
-        std::cout << nodes[i];
+        std::cerr << nodes[i];
         if (i < nodes.size() - 1) {
-            std::cout << " -> ";
+            std::cerr << " -> ";
         }
     }
-    std::cout << "\n";
+    std::cerr << "\n";
 }
 
 // Dijkstra's algorithm - returns distances from source to all nodes

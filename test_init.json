@@ -1,1 +1,0 @@
-{"type": "INIT", "warehouse_layout": {"nodes": [], "edges": []}, "products": [], "robots": [{"id": "R1", "index": 0, "current_node": 0, "target_node": 0, "battery": 100.0, "status": "Idle", "carrying": false, "has_order": false, "speed": 1.0}]}

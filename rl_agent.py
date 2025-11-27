@@ -6,7 +6,8 @@ Communicates with C++ simulation via JSON over stdin/stdout
 
 import sys
 import json
-from typing import Dict, List, Optional, Tuple
+import os
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 import random
@@ -69,9 +70,42 @@ class WarehouseRLAgent:
         sys.stderr.write(f"[RL] {message}\n")
         sys.stderr.flush()
     
-    def send_message(self, msg: Dict):
-        """Send JSON message to C++ sim."""
-        print(json.dumps(msg), flush=True)
+    # def send_message(self, msg: Dict):
+    #     """Send JSON message to C++ sim."""
+    #     json_str = json.dumps(msg)
+    #     # MAX LOGGNING: Bekräftar exakt vad som skickas ut till stdout/pipen.
+    #     self.log(f"-> OUTGOING: {json_str.strip()[:100]}...")
+    #     # Skickar meddelandet till C++-simuleringen
+    #     print(json_str, flush=True) 
+    
+    def send_message(self, message: Dict[str, Any]):
+        """
+        Skickar ett JSON-meddelande till C++-simulatorn via stdout.
+        Använder flera metoder för att säkerställa att bufferten töms (flush).
+        """
+        try:
+            # 1. Serialisera meddelandet
+            json_string = json.dumps(message)
+            
+            # 2. Skriv meddelandet följt av en ny rad (std::endl motsvarighet)
+            sys.stdout.write(json_string + '\n')
+            
+            self.log(f"-> OUTGOING: {json_string}...")
+            
+            
+            
+            # 3. Standard tömning (flush) av Python-bufferten
+            sys.stdout.flush()
+            
+            # 4. EXTREMT VIKTIGT: Tvinga operativsystemet att skriva ut buffern till filbeskrivningen (pipen).
+            # Detta är nödvändigt när standard flush inte räcker.
+            # fsync tvingar en synkron skrivning till disken/pipen.
+            #os.fsync(sys.stdout.fileno())
+
+            self.log(f"[RL] Message SENT and flushed.")
+
+        except Exception as e:
+            self.log(f"[RL] FEL vid sändning: {e}")
     
     def receive_message(self) -> Optional[Dict]:
         """Receive JSON message from C++ sim."""
@@ -80,8 +114,8 @@ class WarehouseRLAgent:
             if not line:
                 return None
             
-            # --- Felsökning: Logga rå JSON-sträng ---
-            self.log(f"Received raw JSON string: {line.strip()[:100]}...")
+            # Förbättrad Felsökning: Logga rå JSON-sträng som tas emot
+            self.log(f"<- INCOMING: {line.strip()[:100]}...")
             
             return json.loads(line.strip())
         except json.JSONDecodeError as e:
@@ -90,7 +124,10 @@ class WarehouseRLAgent:
     
     def send_ready(self):
         """Notify sim that we're ready."""
+        # NY LOGGNING: Bekräftar att READY funktionen anropas.
+        self.log("ATTEMPTING TO SEND: {\"type\": \"READY\"}")
         self.send_message({"type": "READY"})
+        self.log("READY message SENT via send_message.")
     
     def send_action(self, task_id: str, robot_index: int, 
                      action_type: ActionType, product_id: int = -1,
@@ -145,12 +182,19 @@ class WarehouseRLAgent:
         self.products = msg.get("products", [])
         robots_data = msg.get("robots", [])
         
+        # Säkerställ att vi hanterar fallet där 'inventory' saknas i INIT, 
+        # vilket är fallet i din senaste logg.
+        if 'inventory' in msg:
+            self.log("Inventory data present in INIT.")
+        
         self.log(f"Initialized with {len(self.warehouse_layout.get('nodes', []))} nodes")
-        self.log(f"  {len(self.products)} products")
-        self.log(f"  {len(robots_data)} robots")
+        self.log(f" {len(self.products)} products")
+        self.log(f" {len(robots_data)} robots")
         
         # Send READY
+        self.log("Initialization complete. Preparing to send READY signal.") 
         self.send_ready()
+        self.log("Post-READY check: initialize() is returning True.") # NY LOGGNING
         
         return True
     
@@ -244,19 +288,19 @@ class WarehouseRLAgent:
         # Find robot
         robot_idx = self.find_best_robot(task, state)
         if robot_idx == -1:
-            self.log("  No robot available, waiting...")
+            self.log(" No robot available, waiting...")
             self.send_wait(task.task_id, "no_robots_available")
             return
         
         # Find product location
         source_node, slot_idx = self.find_product_shelf(task.product_id, state)
         if source_node == -1:
-            self.log(f"  Product {task.product_id} not found in inventory!")
+            self.log(f" Product {task.product_id} not found in inventory!")
             self.send_wait(task.task_id, "product_not_available")
             return
         
         # Send action
-        self.log(f"  Assigning robot {robot_idx}: Pick from node {source_node} -> Deliver to {task.target_node}")
+        self.log(f" Assigning robot {robot_idx}: Pick from node {source_node} -> Deliver to {task.target_node}")
         self.send_action(
             task_id=task.task_id,
             robot_index=robot_idx,
@@ -273,19 +317,19 @@ class WarehouseRLAgent:
         # Find robot
         robot_idx = self.find_best_robot(task, state)
         if robot_idx == -1:
-            self.log("  No robot available, waiting...")
+            self.log(" No robot available, waiting...")
             self.send_wait(task.task_id, "no_robots_available")
             return
         
         # Find best shelf for this product
         target_shelf = self.find_best_shelf_for_restock(task.product_id, state)
         if target_shelf == -1:
-            self.log(f"  No shelf found for product {task.product_id}")
+            self.log(f" No shelf found for product {task.product_id}")
             self.send_wait(task.task_id, "no_shelf_available")
             return
         
         # Send action
-        self.log(f"  Assigning robot {robot_idx}: Restock from loading dock -> Shelf {target_shelf}")
+        self.log(f" Assigning robot {robot_idx}: Restock from loading dock -> Shelf {target_shelf}")
         self.send_action(
             task_id=task.task_id,
             robot_index=robot_idx,
@@ -302,7 +346,7 @@ class WarehouseRLAgent:
         # Lower priority - could wait if robots busy
         robot_idx = self.find_best_robot(task, state)
         if robot_idx == -1:
-            self.log("  No robot available for restock, deferring...")
+            self.log(" No robot available for restock, deferring...")
             self.send_wait(task.task_id, "low_priority_deferred")
             return
         
@@ -387,9 +431,9 @@ class WarehouseRLAgent:
                 # Episode finished
                 metrics = msg.get("metrics", {})
                 self.log(f"Episode {self.episode_count} ended")
-                self.log(f"  Orders completed: {metrics.get('orders_completed', 0)}")
-                self.log(f"  Orders failed: {metrics.get('orders_failed', 0)}")
-                self.log(f"  Decisions made: {self.decisions_made}")
+                self.log(f" Orders completed: {metrics.get('orders_completed', 0)}")
+                self.log(f" Orders failed: {metrics.get('orders_failed', 0)}")
+                self.log(f" Decisions made: {self.decisions_made}")
                 
                 # Start new episode
                 self.episode_count += 1
@@ -412,6 +456,22 @@ class WarehouseRLAgent:
 
 
 if __name__ == "__main__":
+    import sys
+    
+    # Check for pipe arguments
+    if len(sys.argv) >= 3:
+        cpp_to_py_pipe = sys.argv[1]
+        py_to_cpp_pipe = sys.argv[2]
+        
+        sys.stderr.write(f"[RL] Using named pipes:\n")
+        sys.stderr.write(f"  C++ -> Python: {cpp_to_py_pipe}\n")
+        sys.stderr.write(f"  Python -> C++: {py_to_cpp_pipe}\n")
+        sys.stderr.flush()
+        
+        # Open pipes
+        sys.stdin = open(cpp_to_py_pipe, 'r', buffering=1)
+        sys.stdout = open(py_to_cpp_pipe, 'w', buffering=1)
+    
     agent = WarehouseRLAgent()
     
     try:

@@ -52,7 +52,7 @@ void EpisodeLogger::startEpisode(int episodeNumber) {
         heatmapData.push_back(hm);
     }
     
-    std::cout << "[LOGGER] Started recording episode " << episodeNumber << "\n";
+    std::cerr << "[LOGGER] Started recording episode " << episodeNumber << "\n";
 }
 
 void EpisodeLogger::endEpisode() {
@@ -82,7 +82,7 @@ void EpisodeLogger::endEpisode() {
     }
     
     isRecording = false;
-    std::cout << "[LOGGER] Ended recording episode " << metrics.episodeNumber 
+    std::cerr << "[LOGGER] Ended recording episode " << metrics.episodeNumber 
               << " (Duration: " << metrics.totalTime << "s)\n";
 }
 
@@ -258,7 +258,7 @@ void EpisodeLogger::saveToJson(const std::string& filename) {
     if (file.is_open()) {
         file << std::setw(2) << j << std::endl;
         file.close();
-        std::cout << "[LOGGER] Saved full episode data to " << fullPath << "\n";
+        std::cerr << "[LOGGER] Saved full episode data to " << fullPath << "\n";
     } else {
         std::cerr << "[LOGGER] Failed to save to " << fullPath << "\n";
     }
@@ -282,7 +282,7 @@ void EpisodeLogger::saveMetricsOnly(const std::string& filename) {
     if (file.is_open()) {
         file << std::setw(2) << j << std::endl;
         file.close();
-        std::cout << "[LOGGER] Saved metrics to " << fullPath << "\n";
+        std::cerr << "[LOGGER] Saved metrics to " << fullPath << "\n";
     }
 }
 
@@ -304,7 +304,7 @@ void EpisodeLogger::saveHeatmapOnly(const std::string& filename) {
     if (file.is_open()) {
         file << std::setw(2) << j << std::endl;
         file.close();
-        std::cout << "[LOGGER] Saved heatmap to " << fullPath << "\n";
+        std::cerr << "[LOGGER] Saved heatmap to " << fullPath << "\n";
     }
 }
 

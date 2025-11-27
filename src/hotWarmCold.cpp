@@ -34,25 +34,25 @@ void updatePopularityAndZone(int productID) {
             recommendedZone = Zone::Cold;
         }
         
-        std::cout << "[POPULARITY] Product " << it->getName() << " popularity: " 
+        std::cerr << "[POPULARITY] Product " << it->getName() << " popularity: " 
                   << currentPop << " -> " << newPop 
                   << " (Recommended zone: ";
         
         switch(recommendedZone) {
-            case Zone::Hot: std::cout << "Hot"; break;
-            case Zone::Warm: std::cout << "Warm"; break;
-            case Zone::Cold: std::cout << "Cold"; break;
-            default: std::cout << "Other"; break;
+            case Zone::Hot: std::cerr << "Hot"; break;
+            case Zone::Warm: std::cerr << "Warm"; break;
+            case Zone::Cold: std::cerr << "Cold"; break;
+            default: std::cerr << "Other"; break;
         }
         
-        std::cout << ")\n";
+        std::cerr << ")\n";
         
         // 4. Check if product should be moved
         int productLocation = findProductPrimaryShelf(productID);
         if (productLocation >= 0 && productLocation < static_cast<int>(nodes.size())) {
             Zone currentZone = nodes[productLocation].getZone();
             if (currentZone != recommendedZone && recommendedZone != Zone::Other) {
-                std::cout << "[ZONE] ⚠️  Product " << it->getName() 
+                std::cerr << "[ZONE] ⚠️  Product " << it->getName() 
                           << " should be moved from " << zoneToString(currentZone)
                           << " to " << zoneToString(recommendedZone) << " zone!\n";
             }
@@ -70,7 +70,7 @@ void applyPopularityDecay(double currentTime) {
     
     lastDecayTime = currentTime;
     
-    std::cout << "[DECAY] Applying popularity decay (rate: " 
+    std::cerr << "[DECAY] Applying popularity decay (rate: " 
               << (1.0 - DECAY_RATE) * 100 << "%)\n";
     
     int productsDecayed = 0;
@@ -88,22 +88,22 @@ void applyPopularityDecay(double currentTime) {
                 product.setPopularity(newPop);
                 productsDecayed++;
                 
-                std::cout << "[DECAY]   " << product.getName() 
+                std::cerr << "[DECAY]   " << product.getName() 
                           << ": " << oldPop << " -> " << newPop << "\n";
             }
         }
     }
     
     if (productsDecayed > 0) {
-        std::cout << "[DECAY] Decayed " << productsDecayed << " products\n";
+        std::cerr << "[DECAY] Decayed " << productsDecayed << " products\n";
     } else {
-        std::cout << "[DECAY] No products needed decay\n";
+        std::cerr << "[DECAY] No products needed decay\n";
     }
 }
 
 void setDecayInterval(double intervalSeconds) {
     decayInterval = intervalSeconds;
-    std::cout << "[DECAY] Decay interval set to " << intervalSeconds << " seconds\n";
+    std::cerr << "[DECAY] Decay interval set to " << intervalSeconds << " seconds\n";
 }
 
 double getDecayInterval() {
@@ -181,7 +181,7 @@ std::vector<int> getProductsByZoneRecommendation(Zone zone) {
 }
 
 void printPopularityReport() {
-    std::cout << "\n=== Popularity Report ===\n";
+    std::cerr << "\n=== Popularity Report ===\n";
     
     // Sort products by popularity
     std::vector<Product> sortedProducts = products;
@@ -190,7 +190,7 @@ void printPopularityReport() {
                   return a.getPopularity() > b.getPopularity();
               });
     
-    std::cout << "Top Products:\n";
+    std::cerr << "Top Products:\n";
     int count = std::min(10, static_cast<int>(sortedProducts.size()));
     for (int i = 0; i < count; ++i) {
         const Product& p = sortedProducts[i];
@@ -202,14 +202,14 @@ void printPopularityReport() {
         else if (pop >= 5) recommendedZone = Zone::Warm;
         else recommendedZone = Zone::Cold;
         
-        std::cout << "  " << (i+1) << ". " << p.getName() 
+        std::cerr << "  " << (i+1) << ". " << p.getName() 
                   << " (pop: " << pop << ", zone: " 
                   << zoneToString(recommendedZone) << ")\n";
     }
     
-    std::cout << "\nZone Distribution:\n";
-    std::cout << "  Hot zone:  " << getProductsByZoneRecommendation(Zone::Hot).size() << " products\n";
-    std::cout << "  Warm zone: " << getProductsByZoneRecommendation(Zone::Warm).size() << " products\n";
-    std::cout << "  Cold zone: " << getProductsByZoneRecommendation(Zone::Cold).size() << " products\n";
-    std::cout << "=========================\n\n";
+    std::cerr << "\nZone Distribution:\n";
+    std::cerr << "  Hot zone:  " << getProductsByZoneRecommendation(Zone::Hot).size() << " products\n";
+    std::cerr << "  Warm zone: " << getProductsByZoneRecommendation(Zone::Warm).size() << " products\n";
+    std::cerr << "  Cold zone: " << getProductsByZoneRecommendation(Zone::Cold).size() << " products\n";
+    std::cerr << "=========================\n\n";
 }

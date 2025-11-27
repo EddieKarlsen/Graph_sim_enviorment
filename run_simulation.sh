@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Warehouse Simulation Runner
-# Starts C++ simulation and Python RL agent
+# Starts C++ simulation and Python RL agent with bidirectional communication
 
 set -e  # Exit on error
 
@@ -24,8 +24,9 @@ fi
 # Make Python script executable
 chmod +x ./rl_agent.py
 
-# Create logs directory
+# Create logs and pipes directory
 mkdir -p logs
+mkdir -p /tmp/warehouse_pipes
 
 # Parse arguments
 EPISODES=1
@@ -69,6 +70,22 @@ SIM_LOG="logs/sim_${TIMESTAMP}.log"
 RL_LOG="logs/rl_${TIMESTAMP}.log"
 COMBINED_LOG="logs/combined_${TIMESTAMP}.log"
 
+# Create named pipes for bidirectional communication
+CPP_TO_PY_PIPE="/tmp/warehouse_pipes/cpp_to_py_$$"
+PY_TO_CPP_PIPE="/tmp/warehouse_pipes/py_to_cpp_$$"
+
+echo "Setting up bidirectional communication..."
+echo "  C++ → Python pipe: $CPP_TO_PY_PIPE"
+echo "  Python → C++ pipe: $PY_TO_CPP_PIPE"
+echo ""
+
+# Remove old pipes if they exist
+rm -f "$CPP_TO_PY_PIPE" "$PY_TO_CPP_PIPE"
+
+# Create named pipes
+mkfifo "$CPP_TO_PY_PIPE"
+mkfifo "$PY_TO_CPP_PIPE"
+
 echo "Logs will be saved to:"
 echo "  Simulation: $SIM_LOG"
 echo "  RL Agent:   $RL_LOG"
@@ -78,10 +95,14 @@ echo ""
 # Function to cleanup on exit
 cleanup() {
     echo ""
-    echo "=== Simulation Stopped ==="
+    echo "=== Cleaning up ==="
     
     # Kill any remaining processes
-    pkill -P $$ 2>/dev/null || true
+    jobs -p | xargs -r kill 2>/dev/null || true
+    wait 2>/dev/null || true
+    
+    # Remove named pipes
+    rm -f "$CPP_TO_PY_PIPE" "$PY_TO_CPP_PIPE"
     
     # Merge logs
     if [ -f "$SIM_LOG" ] && [ -f "$RL_LOG" ]; then
@@ -95,20 +116,66 @@ cleanup() {
         } > "$COMBINED_LOG"
         echo "Combined log saved to: $COMBINED_LOG"
     fi
+    
+    echo "=== Simulation Stopped ==="
 }
 
 trap cleanup EXIT INT TERM
 
 # Start simulation
-echo "=== Starting Simulation ==="
+echo "=== Starting Simulation with Duplex Communication ==="
 echo ""
 
 if [ "$DEBUG" = true ]; then
     # Debug mode: show output in terminal
-    ./warehouse_sim 2> >(tee "$SIM_LOG" >&2) | python3 ./rl_agent.py 2> >(tee "$RL_LOG" >&2)
+    
+    # Start both processes simultaneously in background to avoid pipe deadlock
+    echo "Starting C++ simulation in background..."
+    ./warehouse_sim "$CPP_TO_PY_PIPE" "$PY_TO_CPP_PIPE" 2> >(tee "$SIM_LOG" >&2) &
+    CPP_PID=$!
+    
+    echo "Starting Python RL agent in background..."
+    python3 ./rl_agent.py "$CPP_TO_PY_PIPE" "$PY_TO_CPP_PIPE" 2> >(tee "$RL_LOG" >&2) &
+    PY_PID=$!
+    
+    # Wait for both processes
+    echo "Waiting for processes to complete..."
+    wait $CPP_PID
+    CPP_EXIT=$?
+    wait $PY_PID
+    PY_EXIT=$?
+    
+    if [ $CPP_EXIT -ne 0 ]; then
+        echo "WARNING: C++ simulation exited with code $CPP_EXIT"
+    fi
+    if [ $PY_EXIT -ne 0 ]; then
+        echo "WARNING: Python agent exited with code $PY_EXIT"
+    fi
 else
     # Normal mode: redirect to log files
-    ./warehouse_sim 2>"$SIM_LOG" | python3 ./rl_agent.py 2>"$RL_LOG"
+    
+    # Start both processes simultaneously in background
+    echo "Starting C++ simulation in background..."
+    ./warehouse_sim "$CPP_TO_PY_PIPE" "$PY_TO_CPP_PIPE" 2>"$SIM_LOG" &
+    CPP_PID=$!
+    
+    echo "Starting Python RL agent in background..."
+    python3 ./rl_agent.py "$CPP_TO_PY_PIPE" "$PY_TO_CPP_PIPE" 2>"$RL_LOG" &
+    PY_PID=$!
+    
+    # Wait for both processes
+    echo "Waiting for processes to complete..."
+    wait $CPP_PID
+    CPP_EXIT=$?
+    wait $PY_PID
+    PY_EXIT=$?
+    
+    if [ $CPP_EXIT -ne 0 ]; then
+        echo "WARNING: C++ simulation exited with code $CPP_EXIT"
+    fi
+    if [ $PY_EXIT -ne 0 ]; then
+        echo "WARNING: Python agent exited with code $PY_EXIT"
+    fi
 fi
 
 echo ""

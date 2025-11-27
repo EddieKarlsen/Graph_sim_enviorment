@@ -30,7 +30,7 @@ void initRobots() {
         robots.push_back(robot);
     }
     
-    std::cout << "[ROBOTS] Initialized " << robots.size() << " robots\n";
+    std::cerr << "[ROBOTS] Initialized " << robots.size() << " robots\n";
 }
 
 // Start robot movement to target
@@ -58,8 +58,8 @@ bool startRobotMovement(int robotIdx, int targetNode) {
         return false;
     }
     
-    std::cout << "[ROBOT] " << robot.getId() << " starting movement:\n";
-    std::cout << "        ";
+    std::cerr << "[ROBOT] " << robot.getId() << " starting movement:\n";
+    std::cerr << "        ";
     path.print();
     
     // Set first target (next node in path)
@@ -115,7 +115,7 @@ void updateRobotMovement(int robotIdx, double deltaTime, const Path& fullPath) {
         robot.setCurrentNode(robot.getTargetNode());
         robot.setProgress(0.0);
         
-        std::cout << "[ROBOT] " << robot.getId() << " arrived at node " 
+        std::cerr << "[ROBOT] " << robot.getId() << " arrived at node " 
                   << robot.getCurrentNode() << " (battery: " 
                   << robot.getBattery() << "%)\n";
         
@@ -126,7 +126,7 @@ void updateRobotMovement(int robotIdx, double deltaTime, const Path& fullPath) {
             // Reached final destination
             robot.setStatus(RobotStatus::Idle);
             robot.setTargetNode(-1);
-            std::cout << "[ROBOT] " << robot.getId() << " reached final destination\n";
+            std::cerr << "[ROBOT] " << robot.getId() << " reached final destination\n";
         } else {
             // Continue to next node in path
             robot.setTargetNode(nextNode);
@@ -251,7 +251,7 @@ std::map<std::string, double> step_simulation(
             
             if (robot.battery < batteryUsed) {
                 result["order_failed"] = 1;
-                std::cout << "Robot " << robotIdx << " out of battery\n";
+                std::cerr << "Robot " << robotIdx << " out of battery\n";
                 break;
             }
             
@@ -278,7 +278,7 @@ std::map<std::string, double> step_simulation(
             
             if (robot.carrying) {
                 result["order_failed"] = 1;
-                std::cout << "Robot already carrying item\n";
+                std::cerr << "Robot already carrying item\n";
                 break;
             }
             
@@ -288,7 +288,7 @@ std::map<std::string, double> step_simulation(
             
             if (shelfNode == -1 || shelfNode != targetNode) {
                 result["order_failed"] = 1;
-                std::cout << "Product " << productID << " not found at node " << targetNode << "\n";
+                std::cerr << "Product " << productID << " not found at node " << targetNode << "\n";
                 break;
             }
             
@@ -329,7 +329,7 @@ std::map<std::string, double> step_simulation(
                 result["order_completed"] = 1;
                 updatePopularityAndZone(robot.currentOrder.productID);
                 
-                std::cout << "Robot " << robotIdx << " completed customer order\n";
+                std::cerr << "Robot " << robotIdx << " completed customer order\n";
                 
             } else if (nodes[targetNode].type == NodeType::Shelf) {
                 // Restocking
@@ -337,7 +337,7 @@ std::map<std::string, double> step_simulation(
                 
                 if (bestShelf == targetNode) {
                     result["optimal_zone_placement"] = 1;
-                    std::cout << "Optimal zone placement!\n";
+                    std::cerr << "Optimal zone placement!\n";
                 }
                 
                 auto& shelfData = std::get<Shelf>(nodes[targetNode].data);
@@ -386,7 +386,7 @@ std::map<std::string, double> step_simulation(
                 result["charging_optimal"] = 1;
             }
             
-            std::cout << "Robot " << robotIdx << " charging: " << robot.battery << "%\n";
+            std::cerr << "Robot " << robotIdx << " charging: " << robot.battery << "%\n";
             break;
         }
         
@@ -421,7 +421,7 @@ std::map<std::string, double> step_simulation(
                 result["distance_saved"] = std::max(0.0, originalDistance - newDistance);
                 result["handover_success"] = 1;
                 
-                std::cout << "Task handed over from Robot " << robotIdx 
+                std::cerr << "Task handed over from Robot " << robotIdx 
                           << " to Robot " << nearestRobot << "\n";
             } else {
                 result["order_failed"] = 1;

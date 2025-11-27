@@ -130,7 +130,7 @@ void handleIncomingDelivery(const SimEvent& event) {
     dockData->setCurrentLorry(static_cast<Lorry>(event.getQuantity()));
     dockData->setDeliveryCount(dockData->getDeliveryCount() + 1);
     
-    std::cout << "[DELIVERY] Product " << event.getProductID() 
+    std::cerr << "[DELIVERY] Product " << event.getProductID() 
               << " x" << event.getQuantity() << " arrived at Loading Dock\n";
     
     // Skapa Task för RL-agenten
@@ -153,7 +153,7 @@ void handleIncomingDelivery(const SimEvent& event) {
         
         if (action.actionType != ActionType::WAIT) {
             // RL har valt en robot och hylla
-            std::cout << "[SIM] RL assigned robot " << action.robotIndex 
+            std::cerr << "[SIM] RL assigned robot " << action.robotIndex 
                       << " to restock to node " << action.targetNode << "\n";
             
             // Skicka ACK
@@ -183,7 +183,7 @@ void handleCustomerOrder(const SimEvent& event) {
     
     deskData->setPendingOrders(deskData->getPendingOrders() + 1);
     
-    std::cout << "[ORDER] Customer ordered Product " << event.getProductID() 
+    std::cerr << "[ORDER] Customer ordered Product " << event.getProductID() 
               << " x" << event.getQuantity() << " at Front Desk\n";
     
     // Uppdatera popularity
@@ -209,7 +209,7 @@ void handleCustomerOrder(const SimEvent& event) {
         
         if (action.actionType != ActionType::WAIT) {
             // RL har valt en robot
-            std::cout << "[SIM] RL assigned robot " << action.robotIndex 
+            std::cerr << "[SIM] RL assigned robot " << action.robotIndex 
                       << " to pick from node " << action.sourceNode 
                       << " and deliver to Front Desk\n";
             
@@ -248,7 +248,7 @@ void handleRestockNeeded(const SimEvent& event) {
             double fillRate = static_cast<double>(slot.getOccupied()) / slot.getCapacity();
             
             if (fillRate < 0.3) { // Under 30% kapacitet
-                std::cout << "[RESTOCK] " << shelfData->getName() 
+                std::cerr << "[RESTOCK] " << shelfData->getName() 
                           << " Slot " << j << " (Product " << slot.getProductID() 
                           << ") needs restocking: " << slot.getOccupied() 
                           << "/" << slot.getCapacity() << "\n";

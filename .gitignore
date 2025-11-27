@@ -8,6 +8,8 @@
 
 
 build/
+logs/
+obj/
 
 #externa filer ie pybind11
 externals/
@@ -28,7 +30,8 @@ json.hpp
 # Exekverbara filer (lägg till ditt projektnamn)
 Graph_sim_enviroment
 Graph_sim_enviroment.exe
-
+warehouse_sim
+warehouse_sim.exe
 # Debug-filer
 *.dSYM/
 *.pdb
