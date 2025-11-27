@@ -2,6 +2,7 @@
 #include <cmath>
 #include "../includes/eventSystem.hpp"
 #include "../includes/hotWarmCold.hpp"
+#include "../includes/jsonComm.hpp"
 
 std::priority_queue<SimEvent, std::vector<SimEvent>, std::greater<SimEvent>> eventQueue;
 std::mt19937 rng;
@@ -16,9 +17,13 @@ static std::vector<double> orderIntervals;
 static double lastDeliveryTime = 0.0;
 static double lastOrderTime = 0.0;
 
+// Task ID counter
+static int taskIdCounter = 0;
+
 void initEventSystem(unsigned int seed) {
     rng.seed(seed);
     currentSimTime = 0.0;
+    taskIdCounter = 0;
     
     // Rensa event queue
     while (!eventQueue.empty()) eventQueue.pop();
@@ -49,7 +54,7 @@ void generateIncomingDelivery(double currentTime, double avgIntervalHours) {
     // Slumpa vilken produkt som levereras (populära produkter beställs oftare)
     std::vector<double> weights;
     for (const auto& p : products) {
-        weights.push_back(std::max(1, 10 - p.popularity)); // Lägre popularity = mer påfyllning behövs
+        weights.push_back(std::max(1, 10 - p.getPopularity()));
     }
     std::discrete_distribution<> prodDist(weights.begin(), weights.end());
     int productIdx = prodDist(rng);
@@ -58,7 +63,7 @@ void generateIncomingDelivery(double currentTime, double avgIntervalHours) {
     event.setType(EventType::IncomingDelivery);
     event.setTriggerTime(nextTime);
     event.setNodeIndex(loadingDockNode);
-    event.setProductID(products[productIdx].id);
+    event.setProductID(products[productIdx].getId());
     event.setQuantity(lorrySize);
     
     eventQueue.push(event);
@@ -71,7 +76,7 @@ void generateCustomerOrder(double currentTime, double avgIntervalMinutes) {
     // Populära produkter beställs oftare (Hot zone bias)
     std::vector<double> weights;
     for (const auto& p : products) {
-        weights.push_back(p.popularity + 1); // +1 för att undvika 0
+        weights.push_back(p.getPopularity() + 1);
     }
     std::discrete_distribution<> prodDist(weights.begin(), weights.end());
     int productIdx = prodDist(rng);
@@ -83,14 +88,13 @@ void generateCustomerOrder(double currentTime, double avgIntervalMinutes) {
     event.setType(EventType::CustomerOrder);
     event.setTriggerTime(nextTime);
     event.setNodeIndex(frontDeskNode);
-    event.setProductID(products[productIdx].id);
+    event.setProductID(products[productIdx].getId());
     event.setQuantity(qtyDist(rng));
     
     eventQueue.push(event);
 }
 
 void scheduleRestockCheck(double currentTime) {
-    // Kör restock check varje 30 minuter
     SimEvent event;
     event.setType(EventType::RestockNeeded);
     event.setTriggerTime(currentTime + 1800.0); // 30 min
@@ -110,9 +114,10 @@ void handleIncomingDelivery(const SimEvent& event) {
     totalDeliveries++;
     
     // Original handler logic
-    auto& dockData = std::get<LoadingDock>(nodes[loadingDockNode].data);
+    auto* dockData = nodes[loadingDockNode].getLoadingDock();
+    if (!dockData) return;
     
-    if (dockData.getIsOccupied()) {
+    if (dockData->getIsOccupied()) {
         // Lastbil måste vänta - återschemalägg om 5 minuter
         SimEvent retry = event;
         retry.setTriggerTime(currentSimTime + 300.0);
@@ -121,15 +126,44 @@ void handleIncomingDelivery(const SimEvent& event) {
     }
     
     // Markera dock som upptagen
-    dockData.setIsOccupied(true);
-    dockData.setCurrentLorry(static_cast<Lorry>(event.getQuantity()));
-    dockData.setDeliveryCount(dockData.getDeliveryCount() + 1);
+    dockData->setIsOccupied(true);
+    dockData->setCurrentLorry(static_cast<Lorry>(event.getQuantity()));
+    dockData->setDeliveryCount(dockData->getDeliveryCount() + 1);
     
     std::cout << "[DELIVERY] Product " << event.getProductID() 
               << " x" << event.getQuantity() << " arrived at Loading Dock\n";
     
-    // Skapa unloading order för RL-agenten
-    // RL-agenten behöver tilldela robot att flytta varorna till rätt hylla
+    // Skapa Task för RL-agenten
+    if (globalJsonComm) {
+        Task task;
+        task.taskId = "delivery_" + std::to_string(taskIdCounter++);
+        task.taskType = TaskType::INCOMING_DELIVERY;
+        task.productId = event.getProductID();
+        task.quantity = event.getQuantity();
+        task.sourceNode = loadingDockNode;
+        task.targetNode = -1; // RL väljer hylla
+        task.priority = "normal";
+        task.deadline = currentSimTime + 600.0; // 10 minuter
+        
+        // Skicka till RL
+        globalJsonComm->sendNewTask(task, currentSimTime);
+        
+        // Vänta på beslut från RL
+        Action action = globalJsonComm->receiveAction();
+        
+        if (action.actionType != ActionType::WAIT) {
+            // RL har valt en robot och hylla
+            std::cout << "[SIM] RL assigned robot " << action.robotIndex 
+                      << " to restock to node " << action.targetNode << "\n";
+            
+            // Skicka ACK
+            globalJsonComm->sendAck(task.taskId, action.robotIndex, 
+                                   currentSimTime + 60.0);
+            
+            // Här skulle du köra din step_simulation för att utföra restock
+            // step_simulation(action.robotIndex, RESTOCK_ACTION, action.targetNode, action.productId);
+        }
+    }
     
     // Schemalägg nästa leverans
     generateIncomingDelivery(currentSimTime);
@@ -144,8 +178,10 @@ void handleCustomerOrder(const SimEvent& event) {
     totalOrders++;
     
     // Original handler logic
-    auto& deskData = std::get<FrontDesk>(nodes[frontDeskNode].data);
-    deskData.setPendingOrders(deskData.getPendingOrders() + 1);
+    auto* deskData = nodes[frontDeskNode].getFrontDesk();
+    if (!deskData) return;
+    
+    deskData->setPendingOrders(deskData->getPendingOrders() + 1);
     
     std::cout << "[ORDER] Customer ordered Product " << event.getProductID() 
               << " x" << event.getQuantity() << " at Front Desk\n";
@@ -153,8 +189,43 @@ void handleCustomerOrder(const SimEvent& event) {
     // Uppdatera popularity
     updatePopularityAndZone(event.getProductID());
     
-    // Skapa picking order för RL-agenten
-    // RL-agenten behöver hitta produkt på hylla och transportera till FrontDesk
+    // Skapa Task för RL-agenten
+    if (globalJsonComm) {
+        Task task;
+        task.taskId = "order_" + std::to_string(taskIdCounter++);
+        task.taskType = TaskType::CUSTOMER_ORDER;
+        task.productId = event.getProductID();
+        task.quantity = event.getQuantity();
+        task.sourceNode = -1; // RL hittar produkten på hylla
+        task.targetNode = frontDeskNode;
+        task.priority = "normal";
+        task.deadline = currentSimTime + 300.0; // 5 minuter
+        
+        // Skicka till RL
+        globalJsonComm->sendNewTask(task, currentSimTime);
+        
+        // Vänta på beslut från RL
+        Action action = globalJsonComm->receiveAction();
+        
+        if (action.actionType != ActionType::WAIT) {
+            // RL har valt en robot
+            std::cout << "[SIM] RL assigned robot " << action.robotIndex 
+                      << " to pick from node " << action.sourceNode 
+                      << " and deliver to Front Desk\n";
+            
+            // Skicka ACK
+            globalJsonComm->sendAck(task.taskId, action.robotIndex, 
+                                   currentSimTime + 45.0);
+            
+            // Här skulle du köra din step_simulation för att utföra pickup & delivery
+            // step_simulation(action.robotIndex, PICKUP_ACTION, action.sourceNode, action.productId);
+            // ... sedan DELIVER_ACTION till frontDeskNode
+            
+            // När robot är färdig, skicka status
+            // globalJsonComm->sendRobotStatus(action.robotIndex, StatusType::TASK_COMPLETE,
+            //                                task.taskId, currentSimTime, "Order completed");
+        }
+    }
     
     // Schemalägg nästa order
     generateCustomerOrder(currentSimTime);
@@ -182,7 +253,23 @@ void handleRestockNeeded(const SimEvent& event) {
                           << ") needs restocking: " << slot.getOccupied() 
                           << "/" << slot.getCapacity() << "\n";
                 
-                // RL-agenten kan prioritera påfyllning av denna slot
+                // Skapa restock task för RL (om vi har varorna på loading dock)
+                if (globalJsonComm) {
+                    Task task;
+                    task.taskId = "restock_" + std::to_string(taskIdCounter++);
+                    task.taskType = TaskType::RESTOCK_REQUEST;
+                    task.productId = slot.getProductID();
+                    task.quantity = slot.getCapacity() - slot.getOccupied();
+                    task.sourceNode = loadingDockNode;
+                    task.targetNode = i; // Shelf node
+                    task.priority = "low";
+                    task.deadline = currentSimTime + 1800.0; // 30 minuter
+                    
+                    // Skicka till RL (asynkront, RL kan prioritera)
+                    globalJsonComm->sendNewTask(task, currentSimTime);
+                    
+                    // För restock kan vi vänta på beslut i nästa iteration
+                }
             }
         }
     }
@@ -193,6 +280,9 @@ void handleRestockNeeded(const SimEvent& event) {
 
 void processEvents(double deltaTime) {
     currentSimTime += deltaTime;
+    
+    // Apply popularity decay
+    applyPopularityDecay(currentSimTime);
     
     // Bearbeta alla events som ska triggas nu
     while (!eventQueue.empty() && eventQueue.top().getTriggerTime() <= currentSimTime) {

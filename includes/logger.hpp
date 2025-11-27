@@ -18,6 +18,14 @@ struct EpisodeMetrics {
     int optimalZonePlacements;
     int suboptimalPlacements;
     double robotUtilization;  // Procent av tiden robotar är aktiva
+
+
+    //getters
+    int getOrdersCompleted() const { return ordersCompleted; }
+    int getOrdersFailed() const { return ordersFailed; }
+    double getTotalDistanceTraveled() const { return totalDistanceTraveled; }
+    double getAvgCompletionTime() const { return avgCompletionTime; }
+    double getRobotUtilization() const { return robotUtilization; }
 };
 
 struct RobotSnapshot {
