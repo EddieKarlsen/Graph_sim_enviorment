@@ -14,48 +14,48 @@ const bool ENABLE_LOGGING = true;
 const bool ENABLE_JSON_LOGGING = false;  // Set to true for debug
 
 int main(int argc, char* argv[]) {
-    std::cout << "=== Warehouse Simulation Starting ===\n\n";
+    std::cerr << "=== Warehouse Simulation Starting ===\n\n";
     
     // 1. Initialize simulation
-    std::cout << "[INIT] Initializing products...\n";
+    std::cerr << "[INIT] Initializing products...\n";
     initProducts();
     
-    std::cout << "[INIT] Initializing graph layout...\n";
+    std::cerr << "[INIT] Initializing graph layout...\n";
     initGraphLayout();
     
-    std::cout << "[INIT] Initializing robots...\n";
+    std::cerr << "[INIT] Initializing robots...\n";
     initRobots();
     
-    std::cout << "[INIT] Initializing event system...\n";
+    std::cerr << "[INIT] Initializing event system...\n";
     initEventSystem(42);  // Fixed seed for reproducibility
     
-    std::cout << "[INIT] Initializing logger...\n";
+    std::cerr << "[INIT] Initializing logger...\n";
     if (ENABLE_LOGGING) {
         initLogger("./logs", 1.0);
     }
     
-    std::cout << "[INIT] Initializing JSON communication...\n";
+    std::cerr << "[INIT] Initializing JSON communication...\n";
     initJsonComm(ENABLE_JSON_LOGGING);
     
     // 2. Send INIT message to Python RL agent
-    std::cout << "[INIT] Sending INIT to RL agent...\n";
+    std::cerr << "[INIT] Sending INIT to RL agent...\n";
     sendInitMessage();
     
     // Wait for Python to be ready (it will send back any message)
-    std::cout << "[INIT] Waiting for RL agent to be ready...\n";
+    std::cerr << "[INIT] Waiting for RL agent to be ready...\n";
     json ackMsg = globalJsonComm->receiveMessage();
     if (ackMsg.empty() || ackMsg.value("type", "") != "READY") {
         std::cerr << "[ERROR] Did not receive READY from RL agent. Exiting.\n";
         return 1;
     }
-    std::cout << "[INIT] RL agent is ready!\n\n";
+    std::cerr << "[INIT] RL agent is ready!\n\n";
     
     // 3. Main simulation loop
     int episodeNumber = 1;
     bool running = true;
     
     while (running) {
-        std::cout << "=== Episode " << episodeNumber << " Starting ===\n";
+        std::cerr << "=== Episode " << episodeNumber << " Starting ===\n";
         
         // Start episode logging
         if (ENABLE_LOGGING) {
@@ -87,14 +87,14 @@ int main(int argc, char* argv[]) {
                         robot.setStatus(RobotStatus::Idle);
                         robot.setProgress(0.0);
                         
-                        std::cout << "[ROBOT] " << robot.getId() 
+                        std::cerr << "[ROBOT] " << robot.getId() 
                                   << " arrived at node " << robot.getCurrentNode() << "\n";
                     }
                 }
                 
                 // Check battery
                 if (robot.needsCharging(20.0) && robot.isIdle()) {
-                    std::cout << "[ROBOT] " << robot.getId() 
+                    std::cerr << "[ROBOT] " << robot.getId() 
                               << " needs charging (battery: " << robot.getBattery() << "%)\n";
                     
                     // Send status to RL
@@ -120,11 +120,11 @@ int main(int argc, char* argv[]) {
             
             // Progress indicator every 10 seconds
             if (static_cast<int>(simTime) % 10 == 0) {
-                std::cout << "[TIME] " << simTime << "s / " << EPISODE_DURATION << "s\n";
+                std::cerr << "[TIME] " << simTime << "s / " << EPISODE_DURATION << "s\n";
             }
         }
         
-        std::cout << "\n=== Episode " << episodeNumber << " Ended ===\n";
+        std::cerr << "\n=== Episode " << episodeNumber << " Ended ===\n";
         
         // End episode logging
         if (ENABLE_LOGGING) {
@@ -139,16 +139,16 @@ int main(int argc, char* argv[]) {
         }
         
         // Wait for reset command from RL
-        std::cout << "[SIM] Waiting for RESET command from RL...\n";
+        std::cerr << "[SIM] Waiting for RESET command from RL...\n";
         int nextEpisodeNumber = 0;
         bool shouldReset = globalJsonComm->receiveReset(nextEpisodeNumber);
         
         if (!shouldReset) {
-            std::cout << "[SIM] No RESET received, exiting.\n";
+            std::cerr << "[SIM] No RESET received, exiting.\n";
             running = false;
         } else {
             // Reset simulation
-            std::cout << "[RESET] Resetting for episode " << nextEpisodeNumber << "...\n";
+            std::cerr << "[RESET] Resetting for episode " << nextEpisodeNumber << "...\n";
             episodeNumber = nextEpisodeNumber;
             
             resetInventory();
@@ -164,7 +164,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Cleanup
-    std::cout << "\n=== Simulation Shutting Down ===\n";
+    std::cerr << "\n=== Simulation Shutting Down ===\n";
     shutdownJsonComm();
     
     return 0;

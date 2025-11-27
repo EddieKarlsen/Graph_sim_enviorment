@@ -81,7 +81,15 @@ void JsonComm::sendInit(double timestamp) {
     msg["warehouse_layout"] = buildWarehouseLayout();
     msg["products"] = serializeProducts();
     msg["robots"] = serializeRobots(timestamp);
-    
+
+    //debug for checking init json structure
+    // std::string debug_json = msg.dump(4);
+    // std::cerr << "\n[JSON DEBUG] Skickar INIT-meddelande till RL-agent:\n";
+    // std::cerr << "------------------------------------------\n";
+    // std::cerr << debug_json << "\n";
+    // std::cerr << "------------------------------------------\n";
+    // std::cerr.flush();
+
     *output << msg.dump() << std::endl;
     flush();
     

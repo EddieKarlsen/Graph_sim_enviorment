@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from enum import Enum
 import random
 
+# --- Enums and Data Classes (Unchanged) ---
+
 class TaskType(Enum):
     CUSTOMER_ORDER = "CUSTOMER_ORDER"
     INCOMING_DELIVERY = "INCOMING_DELIVERY"
@@ -77,9 +79,13 @@ class WarehouseRLAgent:
             line = sys.stdin.readline()
             if not line:
                 return None
+            
+            # --- Felsökning: Logga rå JSON-sträng ---
+            self.log(f"Received raw JSON string: {line.strip()[:100]}...")
+            
             return json.loads(line.strip())
         except json.JSONDecodeError as e:
-            self.log(f"JSON decode error: {e}")
+            self.log(f"JSON decode error: {e}. Raw line: {line.strip()}")
             return None
     
     def send_ready(self):
@@ -87,8 +93,8 @@ class WarehouseRLAgent:
         self.send_message({"type": "READY"})
     
     def send_action(self, task_id: str, robot_index: int, 
-                   action_type: ActionType, product_id: int = -1,
-                   source_node: int = -1, target_node: int = -1):
+                     action_type: ActionType, product_id: int = -1,
+                     source_node: int = -1, target_node: int = -1):
         """Send action decision."""
         msg = {
             "type": "ACTION_DECISION",
@@ -131,6 +137,9 @@ class WarehouseRLAgent:
         if not msg or msg.get("type") != "INIT":
             self.log("ERROR: Expected INIT message")
             return False
+        
+        # --- Felsökning: Logga hela INIT-meddelandet ---
+        self.log(f"INIT message received. State Keys: {list(msg.keys())}")
         
         self.warehouse_layout = msg.get("warehouse_layout", {})
         self.products = msg.get("products", [])
@@ -343,6 +352,10 @@ class WarehouseRLAgent:
                 # New task to handle
                 task_data = msg.get("task", {})
                 state = msg.get("state", {})
+                
+                # --- Felsökning: Logga den nya uppgiften ---
+                self.log(f"NEW_TASK received. Task ID: {task_data.get('task_id')}, Type: {task_data.get('task_type')}")
+                # self.log(f"Full state for NEW_TASK: {state}") # Uncomment this line for extremely detailed logging
                 
                 task = Task(
                     task_id=task_data.get("task_id", ""),
