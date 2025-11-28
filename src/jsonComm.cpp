@@ -291,15 +291,44 @@ Action JsonComm::receiveAction() {
  return waitAction;
 }
 
-bool JsonComm::receiveReset(int& outEpisodeNumber) {
- json msg = receiveMessage();
- 
- if (msg.value("type", "") == "RESET") {
-  outEpisodeNumber = msg.value("episode_number", 0);
-  return true;
- }
- 
- return false;
+bool JsonComm::receiveReset(int& nextEpisodeNumber) {
+    // VIKTIGT: Vi loopar för att rensa bort eventuella buffrade meddelanden (t.ex. gamla ACTION_DECISION)
+    // som agenten skickade strax innan EPISODE_END.
+    // Vi läser max 10 gånger för att undvika oändlig loop om agenten kraschar.
+    const int MAX_ATTEMPTS = 20; 
+    
+    std::cerr << "[JSON-RECV] Försöker läsa från stdin (blockerar/loopar)...\\n";
+
+    for (int i = 0; i < MAX_ATTEMPTS; ++i) {
+        // Försök att läsa nästa JSON-meddelande
+        // OBS: Om receiveMessage inte har timeout kommer denna loop att blockeras vid första läsningen om pipen är tom.
+        json msg = receiveMessage(); 
+        
+        if (msg.is_null() || msg.empty()) {
+            // EOF, pipe stängd, eller timeout. Vi har misslyckats med att få RESET.
+            if (i > 0) {
+                 std::cerr << "[JSON-RECV] Varning: Kommunikationsströmmen stängdes efter att ha rensat buffrade meddelanden.\\n";
+            }
+            return false;
+        }
+
+        if (msg.contains("type") && msg["type"].get<std::string>() == "RESET") {
+            // RESET mottogs!
+            if (msg.contains("episode_number")) {
+                nextEpisodeNumber = msg["episode_number"].get<int>();
+                return true;
+            }
+        } 
+        
+        // Här har vi ett meddelande, men det var INTE RESET (t.ex. ACTION_DECISION, SIMULATION_STATE, etc.)
+        std::cerr << "[JSON-RECV] Varning: Mottog buffrat meddelande av typ '" 
+                  << msg.value("type", "UNKNOWN") << "' istället för RESET. Discardar och fortsätter vänta.\\n";
+
+        // Gå till nästa iteration för att läsa nästa meddelande i bufferten
+    }
+    
+    std::cerr << "[JSON-RECV] Varning: Uppnådde maximalt antal läsförsök (" << MAX_ATTEMPTS << ") utan att hitta RESET.\\n";
+    return false;
 }
 
 json JsonComm::buildStateJson(double timestamp) {

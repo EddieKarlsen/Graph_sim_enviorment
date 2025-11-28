@@ -32,50 +32,50 @@ void initProducts() {
     products.clear();
     
     // Clothing (IDs 1-5)
-    products.push_back({1, "T-shirts", 0});
-    products.push_back({2, "Jeans", 0});
-    products.push_back({3, "Jackets", 0});
-    products.push_back({4, "Shoes", 0});
-    products.push_back({5, "Accessories", 0});
+    products.push_back({1, "T-shirts", 10});
+    products.push_back({2, "Jeans", 5});
+    products.push_back({3, "Jackets", 13});
+    products.push_back({4, "Shoes", 6});
+    products.push_back({5, "Accessories", 8});
     
     // Beverages (IDs 6-8)
-    products.push_back({6, "Soda", 0});
-    products.push_back({7, "Juice", 0});
-    products.push_back({8, "Energy Drinks", 0});
+    products.push_back({6, "Soda", 20});
+    products.push_back({7, "Juice", 15});
+    products.push_back({8, "Energy Drinks", 9});
     
     // Cosmetics (IDs 9-12)
-    products.push_back({9, "Skin Care", 0});
-    products.push_back({10, "Makeup", 0});
-    products.push_back({11, "Perfume", 0});
-    products.push_back({12, "Hair Care", 0});
+    products.push_back({9, "Skin Care", 7});
+    products.push_back({10, "Makeup", 12});
+    products.push_back({11, "Perfume", 4});
+    products.push_back({12, "Hair Care", 11});
     
     // Electronics (IDs 13-17)
     products.push_back({13, "Mobile Phones", 0});
-    products.push_back({14, "Laptops", 0});
-    products.push_back({15, "Headphones", 0});
-    products.push_back({16, "Game Consoles", 0});
-    products.push_back({17, "Cameras", 0});
+    products.push_back({14, "Laptops", 3});
+    products.push_back({15, "Headphones", 6});
+    products.push_back({16, "Game Consoles", 15});
+    products.push_back({17, "Cameras", 12});
     
     // Books & Media (IDs 18-20)
-    products.push_back({18, "Books", 0});
-    products.push_back({19, "Magazines", 0});
-    products.push_back({20, "Games", 0});
+    products.push_back({18, "Books", 14});
+    products.push_back({19, "Magazines", 5});
+    products.push_back({20, "Games", 10});
     
     // Home & Household (IDs 21-25)
-    products.push_back({21, "Kitchen Utensils", 0});
-    products.push_back({22, "Textiles", 0});
-    products.push_back({23, "Furniture", 0});
-    products.push_back({24, "Lighting", 0});
-    products.push_back({25, "Decoration", 0});
+    products.push_back({21, "Kitchen Utensils", 11});
+    products.push_back({22, "Textiles", 9});
+    products.push_back({23, "Furniture", 2});
+    products.push_back({24, "Lighting", 12});
+    products.push_back({25, "Decoration", 18});
     
     // Sports & Recreation (IDs 26-28)
-    products.push_back({26, "Training Equipment", 0});
-    products.push_back({27, "Sports Clothing", 0});
-    products.push_back({28, "Outdoor Equipment", 0});
+    products.push_back({26, "Training Equipment", 14});
+    products.push_back({27, "Sports Clothing", 20});
+    products.push_back({28, "Outdoor Equipment", 22});
     
     // Toys (IDs 29-30)
-    products.push_back({29, "Children's Toys", 0});
-    products.push_back({30, "Board Games", 0});
+    products.push_back({29, "Children's Toys", 25});
+    products.push_back({30, "Board Games", 30});
     
     std::cerr << "Initialized " << products.size() << " products\n";
 }
