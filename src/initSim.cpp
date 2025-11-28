@@ -93,61 +93,61 @@ void initGraphLayout() {
     // 2. Skapa alla hyllnoder
     Shelf shelfA; 
     shelfA.setName("Shelf A"); 
-    shelfA.slotCount = 5;
+    shelfA.setSlotCount(5);
     shelfANode = addNode(Node{ .id = "shelf_A", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfA });
     nodes[shelfANode].setZone(Zone::Hot);
 
     Shelf shelfB; 
     shelfB.setName("Shelf B"); 
-    shelfB.slotCount = 5;
+    shelfB.setSlotCount(5);
     shelfBNode = addNode(Node{ .id = "shelf_B", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfB });
     nodes[shelfBNode].setZone(Zone::Warm);
 
     Shelf shelfC; 
     shelfC.setName("Shelf C"); 
-    shelfC.slotCount = 4;
+    shelfC.setSlotCount(4);
     shelfCNode = addNode(Node{ .id = "shelf_C", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfC });
     nodes[shelfCNode].setZone(Zone::Cold);
 
     Shelf shelfD; 
     shelfD.setName("Shelf D"); 
-    shelfD.slotCount = 3;
+    shelfD.setSlotCount(3);
     shelfDNode = addNode(Node{ .id = "shelf_D", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfD });
     nodes[shelfDNode].setZone(Zone::Cold);
 
     Shelf shelfE; 
     shelfE.setName("Shelf E"); 
-    shelfE.slotCount = 3;
+    shelfE.setSlotCount(3);
     shelfENode = addNode(Node{ .id = "shelf_E", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfE });
     nodes[shelfENode].setZone(Zone::Cold);
 
     Shelf shelfF; 
     shelfF.setName("Shelf F"); 
-    shelfF.slotCount = 3;
+    shelfF.setSlotCount(3);
     shelfFNode = addNode(Node{ .id = "shelf_F", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfF });
     nodes[shelfFNode].setZone(Zone::Cold);
 
     Shelf shelfG; 
     shelfG.setName("Shelf G"); 
-    shelfG.slotCount = 2;
+    shelfG.setSlotCount(2);
     shelfGNode = addNode(Node{ .id = "shelf_G", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfG });
     nodes[shelfGNode].setZone(Zone::Cold);
 
     Shelf shelfH; 
     shelfH.setName("Shelf H"); 
-    shelfH.slotCount = 3;
+    shelfH.setSlotCount(3);
     shelfHNode = addNode(Node{ .id = "shelf_H", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfH });
     nodes[shelfHNode].setZone(Zone::Cold);
 
     Shelf shelfI; 
     shelfI.setName("Shelf I"); 
-    shelfI.slotCount = 2;
+    shelfI.setSlotCount(2);
     shelfINode = addNode(Node{ .id = "shelf_I", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfI });
     nodes[shelfINode].setZone(Zone::Hot);
 
     Shelf shelfJ; 
     shelfJ.setName("Shelf J"); 
-    shelfJ.slotCount = 4;
+    shelfJ.setSlotCount(4);
     shelfJNode = addNode(Node{ .id = "shelf_J", .type = NodeType::Shelf, .maxRobots = 1, .data = shelfJ });
     nodes[shelfJNode].setZone(Zone::Warm);
 

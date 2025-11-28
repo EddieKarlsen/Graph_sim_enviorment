@@ -11,7 +11,8 @@ enum class EventType {
     CustomerOrder,
     RobotTaskComplete,
     LowBattery,
-    RestockNeeded
+    RestockNeeded,
+    UrgentRestock
 };
 
 struct SimEvent {

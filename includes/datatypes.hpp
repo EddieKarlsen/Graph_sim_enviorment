@@ -58,9 +58,9 @@ struct Product {
 };
 
 struct Slot {
-    int occupied;       
-    int productID; 
-    int capacity;
+    int occupied = 0;      
+    int productID = -1; 
+    int capacity = 0;
     
     // Getters
     int getOccupied() const { return occupied; }
@@ -76,7 +76,7 @@ struct Slot {
 struct Shelf {
     std::string name;
     struct Slot slots[MAX_SLOTS];
-    int slotCount;
+    int slotCount = 0;
     
     // Getters
     std::string getName() const { return name; }
@@ -87,9 +87,24 @@ struct Shelf {
         }
         return Slot{0, 0, 0};
     }
+
+
+        Shelf() : slotCount(0) {
+        for (int i = 0; i < MAX_SLOTS; ++i) {
+            slots[i].setOccupied(0);
+            slots[i].setProductID(-1);
+            slots[i].setCapacity(0);
+        }
+    }
     
     // Setters
     void setName(const std::string& n) { name = n; }
+    
+    void setSlotCount(int count) {
+        if (count < 0) count = 0;
+        if (count > MAX_SLOTS) count = MAX_SLOTS;
+        slotCount = count;
+    }
     void setSlot(int index, const Slot& slot) {
         if (index >= 0 && index < slotCount && index < MAX_SLOTS) {
             slots[index] = slot;
